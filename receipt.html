@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Receipt — EMAD UK TECH</title>
+  <style>
+    :root { --paper-width: 300px; --pad:12px; font-family: "Courier New", Courier, monospace; color:#111; }
+    body{display:flex;justify-content:center;padding:20px;background:#f3f4f6;}
+    .receipt{width:var(--paper-width);background:#fff;padding:var(--pad);box-shadow:0 6px 18px rgba(0,0,0,0.08);}
+    .logo{font-weight:800;text-align:center;font-size:16px;margin-bottom:6px;}
+    .addr{font-size:12px;text-align:center;color:#444;margin-bottom:8px;}
+    .meta{font-size:12px;margin-bottom:6px;text-align:center;color:#333;}
+    table{width:100%;border-collapse:collapse;margin-top:8px;}
+    td{font-size:13px;padding:6px 0;}
+    .item-name{width:60%;}
+    .item-price{text-align:right;width:40%;}
+    .footer{margin-top:12px;text-align:center;font-size:12px;color:#333;}
+    .actions{display:flex;gap:8px;justify-content:center;margin-top:12px;}
+    button{padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer;}
+  </style>
+</head>
+<body>
+  <div class="receipt" id="receipt">
+    <div class="logo">EMAD UK TECH</div>
+    <div class="addr">Liverpool</div>
+    <div class="meta" id="date"></div>
+    <table id="itemsTable"></table>
+    <div class="footer">Thank you for your purchase</div>
+    <div class="actions">
+      <button id="downloadPdfBtn">Download PDF</button>
+      <button id="printBtn">Print</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script>
+    const singleRaw = localStorage.getItem('pos_view_single');
+    const txId = localStorage.getItem('pos_view_tx');
+    const allTx = JSON.parse(localStorage.getItem('pos_v3_tx') || '[]');
+    const tx = allTx.find(t => t.id === txId) || null;
+    let singleItem = null;
+    try{ if(singleRaw) singleItem = JSON.parse(singleRaw); }catch(e){ singleItem=null; }
+
+    function render(){
+      document.getElementById('date').textContent = new Date().toLocaleString();
+      if(singleItem){
+        const rows = `<tr><td class="item-name">${escape(singleItem.name)}</td><td class="item-price">£${(singleItem.price*singleItem.qty).toFixed(2)}</td></tr>`;
+        document.getElementById('itemsTable').innerHTML = rows;
+      } else if(tx){
+        const rows = tx.items.map(it=>`<tr><td class="item-name">${escape(it.name)}</td><td class="item-price">£${(it.price*it.qty).toFixed(2)}</td></tr>`).join('');
+        document.getElementById('itemsTable').innerHTML = rows;
+      } else {
+        document.getElementById('itemsTable').innerHTML = '<tr><td>No receipt found</td></tr>';
+      }
+      if(localStorage.getItem('pos_view_auto_pdf')){ setTimeout(()=>{ downloadPdf(); localStorage.removeItem('pos_view_auto_pdf'); },600); }
+    }
+
+    function escape(s){ return (s+'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+    async function downloadPdf(){
+      const hasJsPdf = window.jspdf && window.jspdf.jsPDF;
+      if(hasJsPdf){
+        const { jsPDF } = window.jspdf;
+        const mmWidth = 58, margin=4, lineH=6;
+        const items = singleItem ? [singleItem] : (tx ? tx.items : []);
+        const lines = 6 + items.length*1.2 + 4;
+        const pageH = Math.max(90, Math.ceil(lines*lineH+margin*2));
+        const doc = new jsPDF({ unit:'mm', format:[mmWidth,pageH] });
+        doc.setFont('Courier','normal'); doc.setFontSize(10);
+        let y=margin;
+        const center=(text,size=10)=>{ doc.setFontSize(size); const tw=doc.getTextWidth(text); const cx=(mmWidth-tw)/2; doc.text(text,cx,y); doc.setFontSize(10); y+=lineH; };
+        center('EMAD UK TECH',11); center('Liverpool'); center('--- RECEIPT ---');
+        doc.text('Date: '+new Date().toLocaleString(),margin,y); y+=lineH;
+        doc.text('----------------',margin,y); y+=lineH;
+        doc.setFontSize(9);
+        items.forEach(it=>{ doc.text(it.name,margin,y); doc.text('£'+(it.price*(it.qty||1)).toFixed(2), mmWidth-margin, y, {align:'right'}); y+=lineH; });
+        doc.text('----------------',margin,y); y+=lineH;
+        center('Thank you for your purchase!',9);
+        const fname = singleItem ? `Receipt_ITEM_${Date.now()}.pdf` : `Receipt_${tx.id}.pdf`;
+        doc.save(fname);
+      } else { window.print(); }
+    }
+
+    document.getElementById('downloadPdfBtn').addEventListener('click',()=>downloadPdf());
+    document.getElementById('printBtn').addEventListener('click',()=>window.print());
+
+    render();
+    if(singleItem) localStorage.removeItem('pos_view_single');
+  </script>
+</body>
+</html>

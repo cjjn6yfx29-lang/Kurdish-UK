@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EMAD UK TECH — POS v4</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <nav class="topbar">
+      <div class="brand">
+        <div class="logo">EUT</div>
+        <div>
+          <div class="title">EMAD UK TECH</div>
+          <div class="subtitle">Liverpool</div>
+        </div>
+      </div>
+      <div class="controls">
+        <button id="themeToggle" title="Toggle theme">🌙</button>
+        <button id="cameraToggle" title="Toggle camera scanner">📷 Scan</button>
+        <button id="exportBtn">Export</button>
+        <button id="importBtn">Import</button>
+        <input type="file" id="importFile" accept=".json" hidden>
+      </div>
+    </nav>
+
+    <main>
+      <section class="left">
+        <div class="card search-card">
+          <input id="barcodeInput" placeholder="Scan barcode or type SKU and press Enter" autocomplete="off">
+          <div class="search-actions">
+            <button id="addByCode">Add</button>
+            <button id="clearInput">Clear</button>
+          </div>
+          <div id="cameraContainer" class="camera hidden">
+            <video id="video" autoplay muted playsinline></video>
+            <button id="stopCamera">Stop</button>
+            <div id="cameraStatus">Camera ready</div>
+          </div>
+        </div>
+
+        <div class="card quick-card">
+          <h3>Add / Edit Product</h3>
+          <div class="grid">
+            <input id="prodName" placeholder="Product name">
+            <input id="prodCode" placeholder="Barcode / SKU">
+            <input id="prodCost" placeholder="Cost (£)" type="number" step="0.01">
+            <input id="prodPrice" placeholder="Sell Price (£)" type="number" step="0.01">
+          </div>
+          <div class="row">
+            <button id="saveProduct">Save Product</button>
+            <button id="newProduct">New</button>
+          </div>
+        </div>
+
+        <div class="card catalog-card">
+          <h3>Catalog</h3>
+          <div id="catalogList" class="catalog-list"></div>
+        </div>
+      </section>
+
+      <section class="right">
+        <div class="card cart-card">
+          <div class="cart-header">
+            <h3>Cart</h3>
+            <div class="cart-meta">Items: <span id="itemsCount">0</span> — Total: <strong id="totalAmount">0.00</strong> GBP</div>
+          </div>
+          <div id="cartList" class="cart-list"></div>
+          <div class="cart-actions">
+            <button id="clearCart">Clear</button>
+            <button id="payBtn" class="primary">Pay & Save PDF</button>
+          </div>
+          <div class="extras">
+            <label>Payment method:
+              <select id="paymentMethod"><option>Cash</option><option>Card</option><option>Other</option></select>
+            </label>
+            <label>Discount (£): <input id="discount" type="number" step="0.01" value="0"></label>
+          </div>
+        </div>
+
+        <div class="card tx-card">
+          <h3>Transactions</h3>
+          <div class="tx-actions">
+            <button id="downloadTx">Download JSON</button>
+            <button id="downloadCsv">Download CSV</button>
+          </div>
+          <div id="txList" class="tx-list"></div>
+        </div>
+
+        <div class="card reports-card">
+          <h3>Reports</h3>
+          <div>Total Sales: <strong id="reportSales">0.00</strong> GBP</div>
+          <div>Total Profit: <strong id="reportProfit">0.00</strong> GBP</div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">Local POS — files stored in your browser. Works with keyboard barcode scanners. Camera scanner uses the built-in BarcodeDetector when available.</footer>
+  </div>
+
+  <!-- jsPDF CDN (used for PDF generation if present) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script src="app-v4.js"></script>
+</body>
+</html>
